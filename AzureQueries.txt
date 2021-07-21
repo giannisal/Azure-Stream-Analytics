@@ -1,0 +1,91 @@
+/*Query 1*/
+
+SELECT SUM(Amount), System.Timestamp() as Time
+
+INTO q1output
+
+FROM [MyInputBDMS]
+
+WHERE Type =0 AND ATMCode = 19
+GROUP BY SLIDINGWINDOW(minute, 10)
+
+
+
+
+/*Query 2*/
+
+SELECT SUM(Amount), System.Timestamp() as Time
+
+INTO q2output
+
+FROM [MyInputBDMS]
+
+WHERE Type =1
+AND ATMCode = 21
+GROUP BY TUMBLINGWINDOW(hour, 1)
+
+
+/*Query 3*/
+SELECT SUM(Amount), System.Timestamp() as Time
+
+INTO q3output
+
+FROM [MyInputBDMS]
+
+WHERE Type =1
+AND ATMCode = 21
+GROUP BY HOPPINGWINDOW(minute, 60, 30)
+
+/*Query 4*/
+
+SELECT ATMCODE, SUM(Amount), System.Timestamp() as Time
+
+INTO q4output
+
+FROM [MyInputBDMS]
+
+WHERE Type =1
+GROUP BY ATMCODE, SLIDINGWINDOW(hour, 1)
+
+/*Query 5 */
+
+SELECT ATM.area_code, SUM(MyInputBDMS.Amount), System.Timestamp() as Time
+INTO [q5output]
+    FROM [MyInputBDMS]
+    INNER JOIN [ATM]
+    ON [MyInputBDMS].[ATMCode] = [ATM].[atm_code]
+WHERE MyInputBDMS.Type=1
+GROUP BY ATM.area_code,TUMBLINGWINDOW(hour, 1)
+
+/*Query 6 */
+SELECT AREA.area_city, CUSTOMER.gender, SUM(MyInputBDMS.Amount), System.Timestamp() as Time
+INTO [q6output]
+    FROM [MyInputBDMS]
+    INNER JOIN [ATM]
+    ON [MyInputBDMS].[ATMCode] = [ATM].[atm_code]
+    INNER JOIN [AREA]
+    ON [ATM].[area_code] = [AREA].[area_code]
+    INNER JOIN [CUSTOMER]
+    ON [MyInputBDMS].[CardNumber] = [CUSTOMER].[card_number]
+GROUP BY AREA.area_city,CUSTOMER.gender, TUMBLINGWINDOW(hour, 1)
+
+
+/*Query 7 */
+
+SELECT '1'as ALERT , count(cardNumber), cardNumber, System.Timestamp() as Time
+INTO [q7output]
+  FROM [MyInputBDMS]
+  WHERE Type = 1
+  GROUP BY cardNumber, SLIDINGWINDOW(hour, 1)
+  HAVING count(cardNumber) >2
+
+/*Query 8 */
+SELECT '1' as ALERT, COUNT(*), MyInputBDMS.CardNumber,  System.Timestamp() as Time
+INTO [q8output]
+    FROM [MyInputBDMS]
+    INNER JOIN [ATM]
+    ON [MyInputBDMS].[ATMCode] = [ATM].[atm_code]
+    INNER JOIN [CUSTOMER]
+    ON [MyInputBDMS].[CardNumber] = [CUSTOMER].[card_number]
+    WHERE [ATM].[area_code] <> [CUSTOMER].[area_code]
+GROUP BY MyInputBDMS.CardNumber, SLIDINGWINDOW(second, 1)
